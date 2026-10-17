@@ -58,13 +58,6 @@ homopolymer result transfers quantitatively to block-copolymer melts.
    Used as contextual support for local interfacial curvature and skeletal
    network descriptors in complex block-copolymer domains.
 
-9. A. A. Gavrilov, Y. V. Kudryavtsev, and A. V. Chertovich, “Phase Diagrams
-   of Block Copolymer Melts by Dissipative Particle Dynamics Simulations,”
-   *J. Chem. Phys.* **139**, 224901 (2013),
-   [doi:10.1063/1.4837215](https://doi.org/10.1063/1.4837215).
-   Supports the project's upstream visual/S(q) morphology validation and the
-   need to inspect multiple configurations near order–order transitions.
-
 The curvature formulas themselves are standard implicit-level-set identities:
 with `g = grad(phi)` and Hessian `D2(phi)`, V2 evaluates
 
