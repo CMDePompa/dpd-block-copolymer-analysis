@@ -1,6 +1,6 @@
 # Method references
 
-V2 uses these papers as method constraints, not as claims that every liquid or
+This interface analysis method uses these papers as method constraints, not as claims that every liquid or
 homopolymer result transfers quantitatively to block-copolymer melts.
 
 1. A. P. Willard and D. Chandler, “Instantaneous Liquid Interfaces,” *J. Phys.
