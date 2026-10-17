@@ -1,0 +1,157 @@
+# =============================================================================
+# interface_analysis V2 — configuration template
+# =============================================================================
+# Copy this file, edit, and pass to run_interface.py --config.
+# Missing keys fall back to built-in defaults; unknown keys are an error.
+# Units: DPD reduced units (r_c = 1) unless noted. 'auto' values are resolved
+# per simulation and recorded in interface_resolution.json.
+
+# ---------------------------------------------------------------------------
+# REQUIRED SCIENTIFIC CHOICE
+# ---------------------------------------------------------------------------
+# Declare the morphology established by visual inspection and S(q). V2 does
+# not classify or silently change this choice.
+morphology: lamella                 # lamella | sphere | cylinder | gyroid
+minority_phase: auto                # auto | A | B
+
+# ---------------------------------------------------------------------------
+# I/O
+# ---------------------------------------------------------------------------
+input_dir: ./traj files            # directory holding *.prod.lammpstrj files
+output_dir: ./interface_output     # per-sim folders + combined tables written here
+traj_suffix: .prod.lammpstrj
+sims: null                         # null = all trajectories; or a list of sim_ids to restrict
+# Per-sim S(q) pipeline outputs (analysis_summary.csv, accepted_windows.json).
+# When set, q_star/L0 are cross-checked and the accepted window provides the
+# default analysis_start_step. Never written to — read-only.
+sq_results_dir: ../Structure Factor/output
+sq_pipeline_dir: null              # sibling Structure Factor directory; null = auto-locate
+
+# ---------------------------------------------------------------------------
+# Bead types
+# ---------------------------------------------------------------------------
+A_type_id: 1
+B_type_id: 2
+allow_variable_natoms: false
+
+# ---------------------------------------------------------------------------
+# Frame selection
+# ---------------------------------------------------------------------------
+# analysis_start_step: 'auto' uses the S(q) accepted-window start when
+# available (falls back to burn_in_fraction), an integer skips all earlier
+# frames at the file level, null reads the whole file.
+analysis_start_step: auto
+burn_in_fraction: 0.3
+last_step_window: null             # e.g. 100000 keeps the final 100,000 timesteps
+frame_stride: 1                    # analyze every Nth selected frame
+max_frames: null                   # cap; keeps the LAST max_frames (most equilibrated)
+use_frame_index: true              # cache byte offsets for fast seeking in multi-GB files
+
+# ---------------------------------------------------------------------------
+# Density grid  (rho_A, rho_B via periodic cloud-in-cell + Gaussian smoothing)
+# ---------------------------------------------------------------------------
+# Defaults are physically motivated for DPD melts (bead diameter ~ r_c = 1,
+# rho = 3): voxel 0.5 r_c resolves the interface region; sigma = 0.75 r_c
+# averages ~50 beads per smoothing volume (phi noise ~0.1) while staying well
+# below the lamellar period (L0 ~ 10-14 r_c). Run --calibrate to verify on
+# your systems; do NOT tune by visual appeal alone.
+target_voxel_size: 0.5             # r_c
+grid_shape: null                   # explicit [nx, ny, nz] override
+smoothing_sigma: 0.75              # r_c (physical units, converted per axis to voxels)
+deposition: cic                    # cic | ngp
+
+# ---------------------------------------------------------------------------
+# Composition field  phi = (rho_A - rho_B) / (rho_A + rho_B)
+# ---------------------------------------------------------------------------
+density_cutoff_fraction: 0.05      # mask voxels with rho_A+rho_B < frac * mean (should be ~0 in a melt)
+interface_level: 0.0               # phi level set defining the A/B dividing surface
+
+# ---------------------------------------------------------------------------
+# Local-normal analysis for sphere, cylinder, and gyroid interfaces
+# ---------------------------------------------------------------------------
+surface_normal_samples: 2048       # area-systematic surface samples per frame
+normal_profile_points: 65          # points along each local normal (made odd if needed)
+normal_profile_halfwidth: auto      # physical r_c; auto uses the fraction below
+normal_profile_halfwidth_fraction: 0.25 # fraction of S(q) period L0
+cylinder_axis: auto                 # auto from surface normals | explicit [x, y, z]
+
+# ---------------------------------------------------------------------------
+# Lamellar-only normal n0 (ignored for sphere/cylinder/gyroid)
+# ---------------------------------------------------------------------------
+n0_mode: auto                      # auto (FFT + S(q) crosscheck) | fft | fixed
+n0_fixed: null                     # [x, y, z], used only when n0_mode: fixed
+secondary_peak_warn_ratio: 0.5     # polydomain warning threshold (2nd/1st FFT peak intensity)
+qstar_crosscheck_tol: 0.15         # relative |q*| disagreement (FFT vs S(q)) that triggers a warning
+
+# ---------------------------------------------------------------------------
+# Lamellar-only oblique resampling (ignored for sphere/cylinder/gyroid)
+# ---------------------------------------------------------------------------
+interp_order: 3                    # map_coordinates spline order (mode='grid-wrap'); 1 = trilinear
+lateral_voxel_size: auto           # u, v sampling step (auto -> target_voxel_size)
+normal_sample_size: auto           # w sampling step (auto -> target_voxel_size / 2)
+n_periods: auto                    # auto -> shortest verified box-periodic normal closure
+lateral_extent: auto               # (u, v) window size (auto -> median box edge length)
+
+# ---------------------------------------------------------------------------
+# Lamellar-only interface detection (ignored for sphere/cylinder/gyroid)
+# ---------------------------------------------------------------------------
+phi_hysteresis: 0.10               # noise immunity: required |phi| excursion around a crossing
+assignment_tolerance: 0.35         # fraction of L0/2; larger offsets from the ideal plane = ambiguous
+min_column_amplitude: 0.20         # columns whose max|phi| is below this are flagged low-amplitude
+close_pair_fraction: 0.30          # crossing pairs closer than this fraction of L0/2 are flagged
+max_height_infill_fraction: 0.20  # invalidate slope/area metrics above this missing fraction
+
+# ---------------------------------------------------------------------------
+# Lamellar intrinsic width. Nonlamellar morphologies use local-normal tanh,
+# derivative-moment, and error-function widths.
+# ---------------------------------------------------------------------------
+width_fit_halfwidth_fraction: 0.25 # fit window half-width as fraction of L0
+width_min_r2: 0.90
+obliquity_correction: true         # correct local widths by cos(theta) from height-field slopes
+width_fit_max_columns: 1024        # per interface per frame (columns subsampled beyond this)
+
+# ---------------------------------------------------------------------------
+# Penetration / mixing
+# ---------------------------------------------------------------------------
+mixing_thresholds: [0.25, 0.5, 0.75]   # f_mix reported at each |phi| threshold
+penetration_halfwindow: auto           # signed-distance integration half-window (auto -> L0/2)
+
+# ---------------------------------------------------------------------------
+# Chain-region density profiles for fixed A/B blocks
+# ---------------------------------------------------------------------------
+# Profiles are stacked with the detected reciprocal-lattice phase, including
+# for oblique lamellae. They are global profiles, not intrinsic-width fits.
+density_profile_enabled: false
+density_profile_chain_length: null     # required integer when enabled
+density_profile_pure_a_length: null    # required integer when enabled
+density_profile_bins: 100
+density_profile_alignment_sigma_bins: 1.0
+density_profile_interface_window_fraction: 0.05
+# Opt in only if atom IDs increase along bonded chain order. An explicit
+# bead_index-like dump column is preferred and does not need this assumption.
+density_profile_allow_inferred_bead_order: false
+
+# ---------------------------------------------------------------------------
+# Topology (thresholded composition sets, periodic-aware)
+# ---------------------------------------------------------------------------
+topology_thresholds: [-0.6, -0.4, -0.2, 0.0, 0.2, 0.4, 0.6]
+topology_threshold_mode: normalized_plateaus # comparable thresholds despite shifted phase plateaus
+topology_connectivity: 6           # 6 (face) | 26 (vertex)
+
+# ---------------------------------------------------------------------------
+# Outputs
+# ---------------------------------------------------------------------------
+save_maps: true
+save_profiles: true
+plots: true
+diagnostic_plot_stride: 0          # 0 = plot last analyzed frame only; N = every Nth frame too
+autocorrelation_estimate: true
+
+# ---------------------------------------------------------------------------
+# Lamellar calibration mode (run_interface.py --calibrate)
+# ---------------------------------------------------------------------------
+calibration_frames: 2
+calibration_voxel_sizes: [0.4, 0.5, 0.667]
+calibration_sigmas: [0.5, 0.75, 1.0]
+calibration_cutoffs: [0.02, 0.05, 0.10]
+calibration_hysteresis: [0.05, 0.10, 0.20]
