@@ -515,3 +515,9 @@ For a disordered result, an undefined q_star is correct and expected.
   be interpreted using a scientifically chosen block size.
 - Radial S(q) discards directional information. Use real-space snapshots or
   directional analysis when assigning a detailed morphology.
+
+## Method references
+
+See [REFERENCES.md](REFERENCES.md) for the sources behind the direct-sum,
+binary concentration, and particle-mesh methods, and for the distinction
+between published methods and pipeline-specific analysis thresholds.

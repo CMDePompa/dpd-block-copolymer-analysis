@@ -4,7 +4,7 @@ Structure-factor and interface analysis workflows for LAMMPS/DPD block-copolymer
 
 ## Workflows
 
-- [Structure Factor](Structure%20Factor/Sq_README4.md): computes A/B partial and composition S(q) using a fast particle-mesh calculation or an exact direct sum. It reports peak detection, characteristic period, numerical checks, and spectral stationarity.
+- [Structure Factor](Structure%20Factor/Sq_README.md): computes A/B partial and composition S(q) using a fast particle-mesh calculation or an exact direct sum. It reports peak detection, characteristic period, numerical checks, and spectral stationarity. See its [method references](Structure%20Factor/REFERENCES.md).
 - [Interface Analysis](Interface%20Analysis/Int_README.md): measures A/B interface geometry and mixing for user-declared lamellar, spherical, cylindrical, or gyroid morphologies. It reports local-normal width, curvature, domain geometry, and topology and can read S(q) results for a length scale and analysis window.
 
 Both workflows operate on a **selected A/B pair**, set with `A_type_id` and `B_type_id`. They can read trajectories containing other bead types, but do not provide a complete multicomponent analysis. S(q) excludes additional types from its spectra and normalizes by `N_A + N_B`. Interface density fields exclude them, while some bead-level mixing fractions count all particles; optional chain-region profiles reject extra types. Interpret A/B results from a system with more than two species accordingly.
