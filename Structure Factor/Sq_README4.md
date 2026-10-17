@@ -1,4 +1,4 @@
-# Structure-factor pipeline v4
+# Structure-factor analysis pipeline
 
 This pipeline analyzes the selected A/B pair in LAMMPS block-copolymer
 trajectories. A trajectory may contain additional bead types, but only the
